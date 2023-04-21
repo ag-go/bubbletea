@@ -2,10 +2,34 @@ package tea
 
 import (
 	"bytes"
+	"context"
 	"testing"
 )
 
 func TestOptions(t *testing.T) {
+	t.Run("wait for program context", func(t *testing.T) {
+		p := NewProgram(&testModel{}, WithoutRenderer())
+		_, err := p.Run()
+		if err != nil {
+			t.Fatal("should not have errored:", err)
+		}
+		<-p.ctx.Done()
+	})
+
+	t.Run("wait for given context", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		p := NewProgram(&testModel{}, WithContext(ctx), WithoutRenderer())
+		_, err := p.Run()
+		if err != nil {
+			t.Fatal("should not have errored:", err)
+		}
+		<-p.ctx.Done()
+		t.Log("p.ctx.Done() ok")
+		<-ctx.Done()
+		t.Log("<-ctx.Done() ok")
+	})
+
 	t.Run("output", func(t *testing.T) {
 		var b bytes.Buffer
 		p := NewProgram(nil, WithOutput(&b))
